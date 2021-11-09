@@ -45,8 +45,11 @@ app.get('/urls/:shortURL', (req, res) => {
 });
 
 app.post('/urls', (req,res) => {
-  console.log(req.body); //log the POST request body to the console
-  res.send('ok') // Respond with 'Ok' 
+  console.log(req.body.longURL); //log the POST request body to the console
+  // want to push the shortURL-longURL key-value pair to the URLDatabase
+  let shortURL = generateRandomString()
+  urlDatabase[shortURL] = 'http://' + req.body.longURL
+  res.redirect(`/urls/${shortURL}`) // Respond with 'Ok' 
 })
 
 
