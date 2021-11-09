@@ -52,6 +52,16 @@ app.post('/urls', (req,res) => {
   res.redirect(`/urls/${shortURL}`) // Respond with 'Ok' 
 })
 
+app.get("/u/:shortURL", (req, res) => {
+  // find a way to access the database at the shortURL key, then user will be redirected to longURL
+   const shortURL = req.params.shortURL;
+   console.log(shortURL);
+   const longURL = urlDatabase[shortURL]
+   console.log(longURL) 
+  // res.redirect(longURL);
+  res.redirect(longURL)
+});
+
 
 
 app.get('/urls.json', (req, res) => {
