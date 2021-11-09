@@ -50,7 +50,7 @@ app.post('/urls', (req,res) => {
   let shortURL = generateRandomString()
   urlDatabase[shortURL] = 'http://' + req.body.longURL
   res.redirect(`/urls/${shortURL}`) // Respond with 'Ok' 
-})
+});
 
 app.get("/u/:shortURL", (req, res) => {
   // find a way to access the database at the shortURL key, then user will be redirected to longURL
@@ -62,6 +62,13 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL)
 });
 
+app.post('/urls/:shortURL/delete', (req,res) => {
+  const shortURL = req.params.shortURL;
+  console.log(req.body); //log the POST request body to the console
+  // want to push the shortURL-longURL key-value pair to the URLDatabase
+  delete urlDatabase[shortURL]
+  res.redirect(`/urls`) // Respond with 'Ok' 
+});
 
 
 app.get('/urls.json', (req, res) => {
