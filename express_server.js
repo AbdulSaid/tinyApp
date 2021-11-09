@@ -1,9 +1,15 @@
 const express = require('express');
 const app = express();
 const PORT = 8080;
+const bodyParser = require('body-parser');
+app.use(bodyParser.urlencoded({extended: true}));
 
 // setting ejs as the engine
 app.set('view engine','ejs');
+
+function generateRandomString() {
+  console.log("random string");
+}
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -22,10 +28,20 @@ app.get('/urls', (req, res) => {
   return res.render("urls_index", templateVars);
 });
 
+app.get("/urls/new", (req, res) => {
+  res.render("urls_new");
+});
 app.get('/urls/:shortURL', (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: req.params.longURL};
   return res.render("urls_show", templateVars);
 });
+
+app.post('/urls', (req,res) => {
+  console.log(req.body); //log the POST request body to the console
+  res.send('ok') // Respond with 'Ok' 
+})
+
+
 
 app.get('/urls.json', (req, res) => {
   res.json(urlDatabase);
