@@ -3,6 +3,8 @@ const app = express();
 const PORT = 8080;
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({extended: true}));
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
 
 // setting ejs as the engine
 app.set('view engine','ejs');
@@ -79,9 +81,15 @@ app.post('/urls/:shortURL/delete', (req,res) => {
   const shortURL = req.params.shortURL;
   // Delete it from that specific key from the database
   delete urlDatabase[shortURL]
-  res.redirect(`/urls`) // Respond with 'Ok' 
+  res.redirect(`/urls`) 
 });
 
+app.post('/login', (req,res) => {
+  // set a cookie named Username 
+  res.cookie("username", req.body.userName);
+  console.log('req body username',req.body.userName)
+  res.redirect(`/urls/`) 
+});
 
 app.get('/urls.json', (req, res) => {
   res.json(urlDatabase);
