@@ -39,8 +39,11 @@ app.get('/urls', (req, res) => {
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
+
 app.get('/urls/:shortURL', (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: req.params.longURL};
+  const shortURL = req.params.shortURL
+  const templateVars = { shortURL: shortURL, longURL: urlDatabase[shortURL]};
+  // console.log("longURL",templateVars)
   return res.render("urls_show", templateVars);
 });
 
@@ -48,6 +51,15 @@ app.post('/urls', (req,res) => {
   console.log(req.body.longURL); //log the POST request body to the console
   // want to push the shortURL-longURL key-value pair to the URLDatabase
   let shortURL = generateRandomString()
+  urlDatabase[shortURL] = 'http://' + req.body.longURL
+  res.redirect(`/urls/${shortURL}`) // Respond with 'Ok' 
+});
+
+app.post('/urls/:shortURL/', (req,res) => {
+  console.log('req body',req.body); //log the POST request body to the console
+  // want to push the shortURL-longURL key-value pair to the URLDatabase
+  const shortURL = req.params.shortURL;
+  console.log("short URL",shortURL)
   urlDatabase[shortURL] = 'http://' + req.body.longURL
   res.redirect(`/urls/${shortURL}`) // Respond with 'Ok' 
 });
@@ -63,9 +75,9 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.post('/urls/:shortURL/delete', (req,res) => {
+  // Get the shortURL from the params
   const shortURL = req.params.shortURL;
-  console.log(req.body); //log the POST request body to the console
-  // want to push the shortURL-longURL key-value pair to the URLDatabase
+  // Delete it from that specific key from the database
   delete urlDatabase[shortURL]
   res.redirect(`/urls`) // Respond with 'Ok' 
 });
