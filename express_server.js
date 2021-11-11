@@ -41,13 +41,29 @@ app.get('/urls', (req, res) => {
   return res.render("urls_index", templateVars);
 });
 
+app.get('/register', (req, res) => {
+  const templateVars = { 
+    urls: urlDatabase,
+    userName: req.cookies['username'] 
+  };
+  return res.render("urls_registration", templateVars);
+});
+
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = { 
+    urls: urlDatabase,
+    userName: req.cookies['username'] 
+  };
+  res.render("urls_new", templateVars);
 });
 
 app.get('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL
-  const templateVars = { shortURL: shortURL, longURL: urlDatabase[shortURL]};
+  const templateVars = { 
+    shortURL: shortURL, 
+    longURL: urlDatabase[shortURL],
+    userName: req.cookies['username']
+  };
   // console.log("longURL",templateVars)
   return res.render("urls_show", templateVars);
 });
@@ -98,6 +114,13 @@ app.post('/logout', (req,res) => {
   // set a cookie named Username 
   res.clearCookie("username", req.body.userName);
   console.log('req body username',req.body.userName)
+  res.redirect(`/urls/`) 
+});
+
+app.post('/register', (req,res) => {
+  // set a cookie named Username 
+  // res.cookie("username", req.body.userName);
+  // console.log('req body username',req.body.userName)
   res.redirect(`/urls/`) 
 });
 
