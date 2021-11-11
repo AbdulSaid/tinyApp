@@ -86,6 +86,8 @@ app.get('/register', (req, res) => {
   return res.render("urls_registration", templateVars);
 });
 
+
+
 app.get("/urls/new", (req, res) => {
   const templateVars = { 
     urls: urlDatabase,
@@ -153,6 +155,17 @@ app.post('/urls/:shortURL/delete', (req,res) => {
   // Delete it from that specific key from the database
   delete urlDatabase[shortURL]
   res.redirect(`/urls`) 
+});
+
+app.get('/login', (req, res) => {
+  const templateVars = { 
+    urls: urlDatabase,
+    user: null
+  };
+  if (req.cookies.user_id) {
+    templateVars.user = users[req.cookies.userId]
+  }
+  return res.render("urls_login", templateVars);
 });
 
 app.post('/login', (req,res) => {
