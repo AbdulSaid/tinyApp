@@ -47,6 +47,14 @@ const findUserByEmail = (email) => {
   return null
 }
 
+const authenticateLogin = (email, password) => {
+  if (!email) {
+    return {error: "Please input an email address", data: null};
+  }
+  if (!password)  {
+    return {error: "Please input a password", data: null}
+  }
+}
 
 
 app.get('/', (req, res) => {
@@ -167,14 +175,32 @@ app.post('/register', (req,res) => {
   const userId = generateRandomString()
   const userEmail = req.body.email
   const userPassword = req.body.password
-  console.log('before user',users)
+  if (userEmail === "") {
+    res.status(400)
+    res.send("Username is empty")
+    return {error: "Please input an email address", data: null};
+  }
+
+  if (userPassword === "")  {
+    res.status(400)
+    res.send("Password is empty")
+    
+  }
+
+  for (let email in users) {
+    if (users[email].email === userEmail) {
+      res.status(400)
+      res.send("Email is already taken");
+      return {error: "Please enter a new email", data: null}
+    }
+  }
+  
   users[userId] = {
       id: userId,
       email: userEmail,
       password: userPassword
     
   } 
-  console.log('before user',users)
   res.cookie('user_id', userId)
 
   res.redirect(`/urls/`) 
