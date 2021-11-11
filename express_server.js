@@ -20,6 +20,18 @@ function generateRandomString() {
   return randomString
 }
 
+const users = {
+  "GreenId": {
+    id: "GreenID",
+    email: "green@example.com",
+    password: "greenapples"
+  },
+  "BlueId": {
+    id: "BlueID",
+    email: "blue@example.com",
+    password: "blueapples"
+  }
+}
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -76,6 +88,8 @@ app.post('/urls', (req,res) => {
   res.redirect(`/urls/${shortURL}`) // Respond with 'Ok' 
 });
 
+
+
 app.post('/urls/:shortURL/', (req,res) => {
   console.log('req body',req.body); //log the POST request body to the console
   // want to push the shortURL-longURL key-value pair to the URLDatabase
@@ -110,6 +124,22 @@ app.post('/login', (req,res) => {
   res.redirect(`/urls/`) 
 });
 
+app.post('/register', (req,res) => {
+  // set a cookie named user_id
+  const userId = generateRandomString()
+  const userEmail = req.body.email
+  const userPassword = req.body.password
+  users[userId] = {
+      id: userId,
+      email: userEmail,
+      password: userPassword
+    
+  } 
+  res.cookie('user_id', userId)
+
+  res.redirect(`/urls/`) 
+});
+
 app.post('/logout', (req,res) => {
   // set a cookie named Username 
   res.clearCookie("username", req.body.userName);
@@ -117,12 +147,7 @@ app.post('/logout', (req,res) => {
   res.redirect(`/urls/`) 
 });
 
-app.post('/register', (req,res) => {
-  // set a cookie named Username 
-  // res.cookie("username", req.body.userName);
-  // console.log('req body username',req.body.userName)
-  res.redirect(`/urls/`) 
-});
+
 
 app.get('/urls.json', (req, res) => {
   res.json(urlDatabase);
