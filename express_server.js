@@ -46,14 +46,13 @@ const findUserByEmail = (email) => {
   }
   return null
 }
-
-const authenticateLogin = (email, password) => {
-  if (!email) {
-    return {error: "Please input an email address", data: null};
+const findUserPassword = (password) => {
+  for (key in users) {
+    if (users[key].password === password) {
+      return users[key]
+    }
   }
-  if (!password)  {
-    return {error: "Please input a password", data: null}
-  }
+  return null
 }
 
 
@@ -94,7 +93,7 @@ app.get("/urls/new", (req, res) => {
     user: null
   };
   if (req.cookies.user_id) {
-    templateVars.user = users[req.cookies.userId]
+    templateVars.user = users[req.cookies.user_id]
   }
   res.render("urls_new", templateVars);
 });
@@ -107,7 +106,7 @@ app.get('/urls/:shortURL', (req, res) => {
     user: null
   };
   if (req.cookies.user_id) {
-    templateVars.user = users[req.cookies.userId]
+    templateVars.user = users[req.cookies.user_id]
   }
   // console.log("longURL",templateVars)
   return res.render("urls_show", templateVars);
@@ -124,6 +123,13 @@ app.post('/urls', (req,res) => {
 
 
 app.post('/urls/:shortURL/', (req,res) => {
+  const templateVars = { 
+    urls: urlDatabase,
+    user: null
+  };
+  if (req.cookies.user_id) {
+    templateVars.user = users[req.cookies.user_id]
+  }
   console.log('req body',req.body); //log the POST request body to the console
   // want to push the shortURL-longURL key-value pair to the URLDatabase
   const shortURL = req.params.shortURL;
@@ -170,17 +176,29 @@ app.get('/login', (req, res) => {
 
 app.post('/login', (req,res) => {
   // check to see if email is in system
-  console.log("req body 152", req.body.email);
+  const templateVars = { 
+    urls: urlDatabase,
+    user: null
+  };
+  if (req.cookies.user_id) {
+    templateVars.user = users[req.cookies.userId]
+  }
   const foundUser = findUserByEmail(req.body.email);
+  const foundPassword = findUserPassword(req.body.password);
   if (foundUser) {
     console.log("I have found the user",foundUser)
-    res.cookie("user_id", foundUser.id)
+    if (foundPassword) {
+      console.log("I have found the password",foundPassword)
+      res.cookie("user_id", foundUser.id)
     res.redirect(`/urls`) 
+    } else {
+      res.status(403);
+      res.send("Wrong Password")
+    }
   } else {
+    res.status(403);
     res.send('User does not exist');
   }
-  
-  
 });
 
 app.post('/register', (req,res) => {
@@ -216,7 +234,7 @@ app.post('/register', (req,res) => {
   } 
   res.cookie('user_id', userId)
 
-  res.redirect(`/urls/`) 
+  res.redirect(`/login`) 
 });
 
 app.post('/logout', (req,res) => {
