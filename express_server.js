@@ -1,10 +1,17 @@
 const express = require('express');
 const app = express();
 const PORT = 8080;
+const morgan = require('morgan');
 const bodyParser = require('body-parser');
+app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({extended: true}));
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
+const cookieSession = require('cookie-session');
+app.use(cookieSession({
+  name: "sesson",
+  keys: ['email']
+}))
 
 // setting ejs as the engine
 app.set('view engine','ejs');
@@ -39,17 +46,19 @@ const urlDatabase = {
 };
 
 const findUserByEmail = (email) => {
-  for (key in users) {
-    if (users[key].email === email) {
-      return users[key]
+  const userInfo = Object.values(users);
+  for (const user of userInfo) {
+    if (user.email === email) {
+      return user;
     }
   }
   return null
 }
 const findUserPassword = (password) => {
-  for (key in users) {
-    if (users[key].password === password) {
-      return users[key]
+  const userInfo = Object.values(users);
+  for (const user of userInfo) {
+    if (user.password === password) {
+      return user;
     }
   }
   return null
@@ -74,16 +83,7 @@ app.get('/urls', (req, res) => {
   return res.render("urls_index", templateVars);
 });
 
-app.get('/register', (req, res) => {
-  const templateVars = { 
-    urls: urlDatabase,
-    user: null
-  };
-  if (req.cookies.user_id) {
-    templateVars.user = users[req.cookies.userId]
-  }
-  return res.render("urls_registration", templateVars);
-});
+
 
 
 
@@ -95,7 +95,29 @@ app.get("/urls/new", (req, res) => {
   if (req.cookies.user_id) {
     templateVars.user = users[req.cookies.user_id]
   }
+
+  console.log("this",req.cookies.user_id )
+  if (req.cookies.user_id === " "){
+    res.redirect('/login')
+  }
   res.render("urls_new", templateVars);
+});
+
+app.get("/u/:shortURL", (req, res) => {
+  // find a way to access the database at the shortURL key, then user will be redirected to longURL
+  const templateVars = { 
+    urls: urlDatabase,
+    user: null
+  };
+  if (req.cookies.user_id) {
+    templateVars.user = users[req.cookies.userId]
+  }
+  const shortURL = req.params.shortURL;
+   console.log(shortURL);
+   const longURL = urlDatabase[shortURL]
+   console.log(longURL) 
+  // res.redirect(longURL);
+  res.redirect(longURL)
 });
 
 app.get('/urls/:shortURL', (req, res) => {
@@ -121,7 +143,6 @@ app.post('/urls', (req,res) => {
 });
 
 
-
 app.post('/urls/:shortURL/', (req,res) => {
   const templateVars = { 
     urls: urlDatabase,
@@ -138,22 +159,7 @@ app.post('/urls/:shortURL/', (req,res) => {
   res.redirect(`/urls/${shortURL}`) // Respond with 'Ok' 
 });
 
-app.get("/u/:shortURL", (req, res) => {
-  // find a way to access the database at the shortURL key, then user will be redirected to longURL
-  const templateVars = { 
-    urls: urlDatabase,
-    user: null
-  };
-  if (req.cookies.user_id) {
-    templateVars.user = users[req.cookies.userId]
-  }
-  const shortURL = req.params.shortURL;
-   console.log(shortURL);
-   const longURL = urlDatabase[shortURL]
-   console.log(longURL) 
-  // res.redirect(longURL);
-  res.redirect(longURL)
-});
+
 
 app.post('/urls/:shortURL/delete', (req,res) => {
   // Get the shortURL from the params
@@ -164,41 +170,51 @@ app.post('/urls/:shortURL/delete', (req,res) => {
 });
 
 app.get('/login', (req, res) => {
-  const templateVars = { 
-    urls: urlDatabase,
-    user: null
-  };
-  if (req.cookies.user_id) {
-    templateVars.user = users[req.cookies.userId]
+  const id = req.cookies['user_id']
+  const user = users[id];
+  if (user) {
+    return res.redirect('/urls');
   }
-  return res.render("urls_login", templateVars);
+  return res.render("urls_login", { user });
 });
 
 app.post('/login', (req,res) => {
-  // check to see if email is in system
-  const templateVars = { 
-    urls: urlDatabase,
-    user: null
-  };
-  if (req.cookies.user_id) {
-    templateVars.user = users[req.cookies.userId]
+  const email = req.body.email;
+  const password = req.body.password;
+  const user = findUserByEmail(email); // helper function from above to check if the user email exist in the database
+
+  // check if user has puts in a email or password
+  if (!user || user.password !== password) {
+    return res.status(400)
+    .send("Wrong email or password. Please <a href='/login'>try again</a>");
   }
-  const foundUser = findUserByEmail(req.body.email);
-  const foundPassword = findUserPassword(req.body.password);
-  if (foundUser) {
-    console.log("I have found the user",foundUser)
-    if (foundPassword) {
-      console.log("I have found the password",foundPassword)
-      res.cookie("user_id", foundUser.id)
-    res.redirect(`/urls`) 
-    } else {
-      res.status(403);
-      res.send("Wrong Password")
-    }
-  } else {
-    res.status(403);
-    res.send('User does not exist');
+
+  res.cookie("user_id", user.id);
+  res.redirect("/urls")
+
+  // if (foundUser) {
+  //   console.log("I have found the user",foundUser)
+  //   if (foundPassword) {
+  //     console.log("I have found the password",foundPassword)
+  //     res.cookie("user_id", foundUser.id)
+  //   res.redirect(`/urls`) 
+  //   } else {
+  //     res.status(403);
+  //     res.send("Wrong Password")
+  //   }
+  // } else {
+  //   res.status(403);
+  //   res.send('User does not exist');
+  // }
+});
+app.get('/register', (req, res) => {
+  const id = req.cookies['user_id']
+  const user = users[id];
+  if (user) {
+    return res.redirect('/urls');
   }
+
+  res.render("urls_registration", { user });
 });
 
 app.post('/register', (req,res) => {
