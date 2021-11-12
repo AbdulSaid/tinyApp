@@ -29,7 +29,7 @@ function generateRandomString() {
 
 const users = {
   "GreenId": {
-    id: "GreenID",
+    id: "b6UTxQ",
     email: "green@example.com",
     password: "greenapples"
   },
@@ -41,8 +41,14 @@ const users = {
 }
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+      longURL: "https://www.tsn.ca",
+      userID: "aJ48lW"
+  },
+  i3BoGr: {
+      longURL: "https://www.google.ca",
+      userID: "aJ48lW"
+  }
 };
 
 const findUserByEmail = (email) => {
@@ -66,7 +72,15 @@ const findUserPassword = (password) => {
 
 // Function to find the urls for each user
 const urlsForUser = function(id) {
-
+  const results = {};
+  const keys = Object.keys(urlDatabase);
+  for (const shortURL of keys) {
+    const url = urlDatabase[shortURL]
+    if (url.userID === id){
+      results[shortURL] = url
+    }
+  }
+  return results;
 }
 
 
@@ -78,14 +92,21 @@ app.get("/hello", (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
-  const templateVars = { 
-    urls: urlDatabase,
-    user: null
-  };
-  if (req.cookies.user_id) {
-    templateVars.user = users[req.cookies.user_id]
+  const userID = req.cookies["user_id"];
+  const user = users[userID];
+  if (!user) {
+    return res.status(401)
+    .send("You must <a href='/login'>login</a> first");
   }
-  return res.render("urls_index", templateVars);
+
+
+  const urls = urlsForUser(userID);
+  const templateVars = {
+    urls: urls,
+    user: user
+  }
+
+  res.render("urls_index", templateVars)
 });
 
 
@@ -93,19 +114,13 @@ app.get('/urls', (req, res) => {
 
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { 
-    urls: urlDatabase,
-    user: null
-  };
-  if (req.cookies.user_id) {
-    templateVars.user = users[req.cookies.user_id]
+  const id = req.cookies['user_id'];
+  const user = users[id];
+  if (!user) {
+    return res.redirect('/login')
   }
 
-  console.log("this",req.cookies.user_id )
-  if (req.cookies.user_id === " "){
-    res.redirect('/login')
-  }
-  res.render("urls_new", templateVars);
+  res.render("urls_new", { user });
 });
 
 app.get("/u/:shortURL", (req, res) => {
@@ -126,15 +141,22 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.get('/urls/:shortURL', (req, res) => {
-  const shortURL = req.params.shortURL
-  const templateVars = { 
-    shortURL: shortURL, 
-    longURL: urlDatabase[shortURL],
-    user: null
-  };
-  if (req.cookies.user_id) {
-    templateVars.user = users[req.cookies.user_id]
+  // const shortURL = req.params.shortURL
+  // const templateVars = { 
+  //   shortURL: shortURL, 
+  //   longURL: urlDatabase[shortURL],
+  //   user: null
+  // };
+  // if (req.cookies.user_id) {
+  //   templateVars.user = users[req.cookies.user_id]
+  // }
+  const userID = req.cookies['user_id'];
+  const user = users[userID];
+  if (!user || !userID) {
+    return res.status(401)
+    .send("You don't have access to this url. Please <a href='/login'>login</a> first");
   }
+
   // console.log("longURL",templateVars)
   return res.render("urls_show", templateVars);
 });
