@@ -64,6 +64,11 @@ const findUserPassword = (password) => {
   return null
 }
 
+// Function to find the urls for each user
+const urlsForUser = function(id) {
+
+}
+
 
 app.get('/', (req, res) => {
   res.send('Hello');
@@ -184,28 +189,18 @@ app.post('/login', (req,res) => {
   const user = findUserByEmail(email); // helper function from above to check if the user email exist in the database
 
   // check if user has puts in a email or password
-  if (!user || user.password !== password) {
+  if (!user) {
     return res.status(400)
-    .send("Wrong email or password. Please <a href='/login'>try again</a>");
+    .send("Wrong email. Please <a href='/login'>try again</a>");
+  }
+  if (user.password !== password) {
+    return res.status(400)
+    .send("Wrong password. Please <a href='/login'>try again</a>");
   }
 
   res.cookie("user_id", user.id);
   res.redirect("/urls")
 
-  // if (foundUser) {
-  //   console.log("I have found the user",foundUser)
-  //   if (foundPassword) {
-  //     console.log("I have found the password",foundPassword)
-  //     res.cookie("user_id", foundUser.id)
-  //   res.redirect(`/urls`) 
-  //   } else {
-  //     res.status(403);
-  //     res.send("Wrong Password")
-  //   }
-  // } else {
-  //   res.status(403);
-  //   res.send('User does not exist');
-  // }
 });
 app.get('/register', (req, res) => {
   const id = req.cookies['user_id']
@@ -222,49 +217,37 @@ app.post('/register', (req,res) => {
   const userId = generateRandomString()
   const userEmail = req.body.email
   const userPassword = req.body.password
-  if (userEmail === "") {
-    res.status(400)
-    res.send("Username is empty")
-    return {error: "Please input an email address", data: null};
+  if (!userEmail) {
+    return res.status(400)
+    .send("Missing email. Please <a href='/register'>try again</a>");
+  }
+  if (!userPassword) {
+    return res.status(400)
+    .send("Missing password. Please <a href='/register'>try again</a>");
   }
 
-  if (userPassword === "")  {
-    res.status(400)
-    res.send("Password is empty")
-    
+  if (findUserByEmail(userEmail)) {
+    return res.status(400)
+    .send("Email already exist. Please <a href='/register'>try again</a>");
   }
 
-  for (let email in users) {
-    if (users[email].email === userEmail) {
-      res.status(400)
-      res.send("Email is already taken");
-      return {error: "Please enter a new email", data: null}
-    }
+  const user = {
+    id: userId,
+    email: userEmail,
+    password: userPassword
   }
+
   
-  users[userId] = {
-      id: userId,
-      email: userEmail,
-      password: userPassword
-    
-  } 
+  users[userId] = user;
+  
   res.cookie('user_id', userId)
-
-  res.redirect(`/login`) 
+  res.redirect(`/urls`) 
 });
 
 app.post('/logout', (req,res) => {
   // set a cookie named Username 
-  const templateVars = { 
-    urls: urlDatabase,
-    user: null
-  };
-  if (req.cookies.user_id) {
-    templateVars.user = users[req.cookies.userId]
-  }
-  res.clearCookie("user_id", req.body.user_id);
-  console.log('req body username',req.body.userName)
-  res.redirect(`/urls/`) 
+  res.clearCookie("user_id");
+  res.redirect(`/urls`) 
 });
 
 
