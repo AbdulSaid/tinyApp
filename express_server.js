@@ -225,23 +225,27 @@ app.post('/urls/:shortURL/', (req,res) => {
     return res.status(401)
     .send("You don't have access to this url. Please <a href='/login'>login</a> first");
   }
-  const newURL = 'http://' + req.body.longURL
-  console.log("something i need",  newURL)
-  console.log('url before', url)
-  url.longURL = newURL
-  console.log('url after', url)
 
+  // if starts with http, then append req.body.longURL
+  // if not apped http
+  const newInputURL = 'http://' + req.body.longURL
+  
+  url.longURL = newInputURL;
+  
+  console.log("we are testing this out");
+  console.log("newInputURL",newInputURL);
+  console.log("databaseChange", url);
   // urlDatabase[shortURL] = 'http://' + req.body.longURL
  
 
-  const templateVars = {
-    shortURL: shortURL,
-    url: url,
-    user: user
-  }
-  console.log('templatevars',templateVars)
+  // const templateVars = {
+  //   shortURL: shortURL,
+  //   url: url,
+  //   user: user
+  // }
+  // console.log('templatevars',templateVars)
  
-  res.redirect(`/urls/${shortURL}`,templateVars) // Respond with 'Ok' 
+  res.redirect(`/urls/${shortURL}`) // Respond with 'Ok' 
 });
 
 
