@@ -7,6 +7,7 @@ app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({extended: true}));
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
+const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
 app.use(cookieSession({
   name: "sesson",
@@ -229,22 +230,7 @@ app.post('/urls/:shortURL/', (req,res) => {
   // if starts with http, then append req.body.longURL
   // if not apped http
   const newInputURL = 'http://' + req.body.longURL
-  
   url.longURL = newInputURL;
-  
-  console.log("we are testing this out");
-  console.log("newInputURL",newInputURL);
-  console.log("databaseChange", url);
-  // urlDatabase[shortURL] = 'http://' + req.body.longURL
- 
-
-  // const templateVars = {
-  //   shortURL: shortURL,
-  //   url: url,
-  //   user: user
-  // }
-  // console.log('templatevars',templateVars)
- 
   res.redirect(`/urls/${shortURL}`) // Respond with 'Ok' 
 });
 
@@ -299,33 +285,45 @@ app.get('/register', (req, res) => {
 app.post('/register', (req,res) => {
   // set a cookie named user_id
   const userId = generateRandomString()
-  const userEmail = req.body.email
-  const userPassword = req.body.password
-  if (!userEmail) {
-    return res.status(400)
-    .send("Missing email. Please <a href='/register'>try again</a>");
-  }
-  if (!userPassword) {
-    return res.status(400)
-    .send("Missing password. Please <a href='/register'>try again</a>");
-  }
-
-  if (findUserByEmail(userEmail)) {
-    return res.status(400)
-    .send("Email already exist. Please <a href='/register'>try again</a>");
-  }
+  const userEmail = req.body.email;
 
   const user = {
     id: userId,
-    email: userEmail,
-    password: userPassword
+    email: userEmail
   }
+  
+  const userPassword = req.body.password;
 
+  bcrypt.hash(userPassword,10).then(result => {
+    user.password = result;
+    console.log("user.pass", user.password);
+    if (!userEmail) {
+      return res.status(400)
+      .send("Missing email. Please <a href='/register'>try again</a>");
+    }
+    if (!userPassword) {
+      return res.status(400)
+      .send("Missing password. Please <a href='/register'>try again</a>");
+    }
   
-  users[userId] = user;
+    if (findUserByEmail(userEmail)) {
+      return res.status(400)
+      .send("Email already exist. Please <a href='/register'>try again</a>");
+    }
   
-  res.cookie('user_id', userId)
-  res.redirect(`/urls`) 
+    // const user = {
+    //   id: userId,
+    //   email: userEmail,
+    //   password: userPassword
+    // }
+  
+    
+    users[userId] = user;
+    
+    res.cookie('user_id', userId)
+    res.redirect(`/urls`) 
+
+  })
 });
 
 app.post('/logout', (req,res) => {
