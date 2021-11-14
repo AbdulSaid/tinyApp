@@ -1,3 +1,4 @@
+const findUserByEmail = require('./helpers')
 const express = require('express');
 const app = express();
 const PORT = 8080;
@@ -52,22 +53,14 @@ const urlDatabase = {
   }
 };
 
-// const findUserByEmail = (email) => {
-//   const userInfo = Object.values(users);
-//   for (const user of userInfo) {
-//     if (user.email === email) {
-//       return user;
-//     }
-//   }
-//   return null
-// }
 
-const findUserByEmail = (users, email) => {
-  for (let user in users) {
-    if (users[user].email === email) 
-    return users[user]
- }
-};
+
+// const findUserByEmail = (users, email) => {
+//   for (let user in users) {
+//     if (users[user].email === email) 
+//     return users[user]
+//  }
+// };
 
 // Function to find the urls for each user
 const urlsForUser = function(id) {
