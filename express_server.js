@@ -32,12 +32,12 @@ const users = {
   "aJ48lW": {
     id: "aJ48lW",
     email: "green@example.com",
-    password: "greenapples"
+    password: bcrypt.hashSync("greenapples",10)
   },
   "BlueId": {
     id: "BlueID",
     email: "blue@example.com",
-    password: "blueapples"
+    password: bcrypt.hashSync("blueapples",10)
   }
 }
 
@@ -117,9 +117,6 @@ app.get('/urls', (req, res) => {
 });
 
 
-
-
-
 app.get("/urls/new", (req, res) => {
   const id = req.cookies['user_id'];
   const user = users[id];
@@ -131,33 +128,6 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", { user });
 });
 
-// app.post("/urls/new", (req, res) => {
-//   const id = req.cookies['user_id'];
-//   const user = users[id];
-//   if (!user) {
-//     return res.redirect('/login')
-//   }
-//   const shortURL = req.params.shortURL;
-//   const url = urlDatabase[shortURL];
-
-//   console.log('url.userID', url.userId)
-//   console.log('id',id);
-  
-//   if (url.userID !== id) {
-//     return res.status(401)
-//     .send("You don't have access to this url. Please <a href='/login'>login</a> first");
-//   }
-//   urlDatabase[shortURL] = 'http://' + req.body.longURL
-
-//   const templateVars = {
-//     shortURL: shortURL,
-//     url: url,
-//     user: user
-//   }
-//   console.log('templatevars',templateVars)
- 
-//   res.redirect(`/urls/${shortURL}`,templateVars)
-// });
 
 app.get("/u/:shortURL", (req, res) => {
   // find a way to access the database at the shortURL key, then user will be redirected to longURL
@@ -234,8 +204,6 @@ app.post('/urls/:shortURL/', (req,res) => {
   res.redirect(`/urls/${shortURL}`) // Respond with 'Ok' 
 });
 
-
-
 app.post('/urls/:shortURL/delete', (req,res) => {
   // Get the shortURL from the params
   const shortURL = req.params.shortURL;
@@ -255,23 +223,29 @@ app.get('/login', (req, res) => {
 
 app.post('/login', (req,res) => {
   const email = req.body.email;
-  const password = req.body.password;
   const user = findUserByEmail(email); // helper function from above to check if the user email exist in the database
+  const password = req.body.password;
 
   // check if user has puts in a email or password
   if (!user) {
     return res.status(400)
     .send("Wrong email. Please <a href='/login'>try again</a>");
   }
-  if (user.password !== password) {
-    return res.status(400)
-    .send("Wrong password. Please <a href='/login'>try again</a>");
+
+  if (user) {
+    console.log("user is found") 
+    bcrypt.compare(password, user.password).then(result => {
+      if (result) {
+        res.cookie("user_id", user.id);
+        res.redirect("/urls")
+      } else {
+        res.send("Incorrect Password");
+      }
+    })
   }
 
-  res.cookie("user_id", user.id);
-  res.redirect("/urls")
-
 });
+
 app.get('/register', (req, res) => {
   const id = req.cookies['user_id']
   const user = users[id];
@@ -331,7 +305,6 @@ app.post('/logout', (req,res) => {
   res.clearCookie("user_id");
   res.redirect(`/urls`) 
 });
-
 
 
 app.get('/urls.json', (req, res) => {
