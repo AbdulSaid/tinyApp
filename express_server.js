@@ -28,8 +28,8 @@ function generateRandomString() {
 }
 
 const users = {
-  "GreenId": {
-    id: "b6UTxQ",
+  "aJ48lW": {
+    id: "aJ48lW",
     email: "green@example.com",
     password: "greenapples"
   },
@@ -76,6 +76,7 @@ const urlsForUser = function(id) {
   const keys = Object.keys(urlDatabase);
   for (const shortURL of keys) {
     const url = urlDatabase[shortURL]
+    console.log('url',url)
     if (url.userID === id){
       results[shortURL] = url
     }
@@ -85,11 +86,15 @@ const urlsForUser = function(id) {
 
 
 app.get('/', (req, res) => {
-  res.send('Hello');
+  const userID = req.cookies["user_id"];
+  const user = users[userID];
+  if (!user) {
+    return res.status(401)
+    .send("You must <a href='/login'>login</a> first");
+  }
+  res.redirect('/urls');
 });
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
+
 
 app.get('/urls', (req, res) => {
   const userID = req.cookies["user_id"];
@@ -101,6 +106,7 @@ app.get('/urls', (req, res) => {
 
 
   const urls = urlsForUser(userID);
+  console.log('urls in get urls',urls)
   const templateVars = {
     urls: urls,
     user: user
@@ -119,19 +125,47 @@ app.get("/urls/new", (req, res) => {
   if (!user) {
     return res.redirect('/login')
   }
+  
 
   res.render("urls_new", { user });
 });
 
+// app.post("/urls/new", (req, res) => {
+//   const id = req.cookies['user_id'];
+//   const user = users[id];
+//   if (!user) {
+//     return res.redirect('/login')
+//   }
+//   const shortURL = req.params.shortURL;
+//   const url = urlDatabase[shortURL];
+
+//   console.log('url.userID', url.userId)
+//   console.log('id',id);
+  
+//   if (url.userID !== id) {
+//     return res.status(401)
+//     .send("You don't have access to this url. Please <a href='/login'>login</a> first");
+//   }
+//   urlDatabase[shortURL] = 'http://' + req.body.longURL
+
+//   const templateVars = {
+//     shortURL: shortURL,
+//     url: url,
+//     user: user
+//   }
+//   console.log('templatevars',templateVars)
+ 
+//   res.redirect(`/urls/${shortURL}`,templateVars)
+// });
+
 app.get("/u/:shortURL", (req, res) => {
   // find a way to access the database at the shortURL key, then user will be redirected to longURL
-  const templateVars = { 
-    urls: urlDatabase,
-    user: null
-  };
-  if (req.cookies.user_id) {
-    templateVars.user = users[req.cookies.userId]
+  const id = req.cookies['user_id'];
+  const user = users[id];
+  if (!user) {
+    return res.redirect('/login')
   }
+
   const shortURL = req.params.shortURL;
    console.log(shortURL);
    const longURL = urlDatabase[shortURL]
@@ -141,49 +175,73 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.get('/urls/:shortURL', (req, res) => {
-  // const shortURL = req.params.shortURL
-  // const templateVars = { 
-  //   shortURL: shortURL, 
-  //   longURL: urlDatabase[shortURL],
-  //   user: null
-  // };
-  // if (req.cookies.user_id) {
-  //   templateVars.user = users[req.cookies.user_id]
-  // }
   const userID = req.cookies['user_id'];
   const user = users[userID];
   if (!user || !userID) {
     return res.status(401)
-    .send("You don't have access to this url. Please <a href='/login'>login</a> first");
+    .send("Please <a href='/login'>login</a> first");
   }
 
+  const shortURL = req.params.shortURL;
+  const url = urlDatabase[shortURL];
+  if (url.userID !== user.id) {
+    return res.status(401)
+    .send("You don't have access to this url. Please <a href='/login'>login</a> first");
+  }
+  const templateVars = {
+    shortURL: shortURL,
+    url: url,
+    user: user
+  }
+  console.log("shorturl in urls:short url", shortURL)
   // console.log("longURL",templateVars)
   return res.render("urls_show", templateVars);
 });
 
 app.post('/urls', (req,res) => {
+  const userId = req.cookies['user_id'];
   console.log(req.body.longURL); //log the POST request body to the console
   // want to push the shortURL-longURL key-value pair to the URLDatabase
   let shortURL = generateRandomString()
-  urlDatabase[shortURL] = 'http://' + req.body.longURL
+  urlDatabase[shortURL] = {
+    longURL: 'http://' + req.body.longURL,
+    userID: userId
+  }
   res.redirect(`/urls/${shortURL}`) // Respond with 'Ok' 
 });
 
 
 app.post('/urls/:shortURL/', (req,res) => {
-  const templateVars = { 
-    urls: urlDatabase,
-    user: null
-  };
-  if (req.cookies.user_id) {
-    templateVars.user = users[req.cookies.user_id]
+  const userID = req.cookies['user_id'];
+  const user = users[userID];
+  if (!user || !userID) {
+    return res.status(401)
+    .send("Please <a href='/login'>login</a> first");
   }
-  console.log('req body',req.body); //log the POST request body to the console
-  // want to push the shortURL-longURL key-value pair to the URLDatabase
+
   const shortURL = req.params.shortURL;
-  console.log("short URL",shortURL)
-  urlDatabase[shortURL] = 'http://' + req.body.longURL
-  res.redirect(`/urls/${shortURL}`) // Respond with 'Ok' 
+  const url = urlDatabase[shortURL];
+  if (url.userID !== user.id) {
+    return res.status(401)
+    .send("You don't have access to this url. Please <a href='/login'>login</a> first");
+  }
+  const newURL = 'http://' + req.body.longURL
+  console.log("something i need",  newURL)
+  console.log('url before', url)
+  url.longURL = newURL
+  console.log('url after', url)
+
+  // urlDatabase[shortURL] = 'http://' + req.body.longURL
+ 
+
+  const templateVars = {
+    shortURL: shortURL,
+    url: url,
+    user: user
+  }
+  console.log('templatevars',templateVars)
+ 
+  res.redirect(`/urls/${shortURL}`,templateVars) // Respond with 'Ok' 
 });
 
 
