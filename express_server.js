@@ -52,16 +52,22 @@ const urlDatabase = {
   }
 };
 
-const findUserByEmail = (email) => {
-  const userInfo = Object.values(users);
-  for (const user of userInfo) {
-    if (user.email === email) {
-      return user;
-    }
-  }
-  return null
-}
+// const findUserByEmail = (email) => {
+//   const userInfo = Object.values(users);
+//   for (const user of userInfo) {
+//     if (user.email === email) {
+//       return user;
+//     }
+//   }
+//   return null
+// }
 
+const findUserByEmail = (users, email) => {
+  for (let user in users) {
+    if (users[user].email === email) 
+    return users[user]
+ }
+};
 
 // Function to find the urls for each user
 const urlsForUser = function(id) {
@@ -215,7 +221,7 @@ app.get('/login', (req, res) => {
 
 app.post('/login', (req,res) => {
   const email = req.body.email;
-  const user = findUserByEmail(email); // helper function from above to check if the user email exist in the database
+  const user = findUserByEmail(users,email); // helper function from above to check if the user email exist in the database
   const password = req.body.password;
 
   // check if user has puts in a email or password
@@ -273,7 +279,7 @@ app.post('/register', (req,res) => {
       .send("Missing password. Please <a href='/register'>try again</a>");
     }
   
-    if (findUserByEmail(userEmail)) {
+    if (findUserByEmail(users,userEmail)) {
       return res.status(400)
       .send("Email already exist. Please <a href='/register'>try again</a>");
     }
