@@ -14,7 +14,6 @@ app.use(cookieSession({
   name: "session",
   keys: ['key1','key2']
 }));
-
 // setting ejs as the engine
 app.set('view engine','ejs');
 
@@ -53,15 +52,6 @@ const urlDatabase = {
   }
 };
 
-
-
-// const findUserByEmail = (users, email) => {
-//   for (let user in users) {
-//     if (users[user].email === email) 
-//     return users[user]
-//  }
-// };
-
 // Function to find the urls for each user
 const urlsForUser = function(id) {
   const results = {};
@@ -75,7 +65,6 @@ const urlsForUser = function(id) {
   }
   return results;
 }
-
 
 app.get('/', (req, res) => {
   const userID = req.session.id;
@@ -95,15 +84,12 @@ app.get('/urls', (req, res) => {
     return res.status(401)
     .send("You must <a href='/login'>login</a> first");
   }
-
-
   const urls = urlsForUser(userID);
   console.log('urls in get urls',urls)
   const templateVars = {
     urls: urls,
     user: user
   }
-
   res.render("urls_index", templateVars)
 });
 
@@ -114,8 +100,6 @@ app.get("/urls/new", (req, res) => {
   if (!user) {
     return res.redirect('/login')
   }
-  
-
   res.render("urls_new", { user });
 });
 
@@ -132,7 +116,6 @@ app.get("/u/:shortURL", (req, res) => {
    console.log(shortURL);
    const longURL = urlDatabase[shortURL]
    console.log(longURL) 
-  // res.redirect(longURL);
   res.redirect(longURL)
 });
 
@@ -156,20 +139,17 @@ app.get('/urls/:shortURL', (req, res) => {
     user: user
   }
   console.log("shorturl in urls:short url", shortURL)
-  // console.log("longURL",templateVars)
   return res.render("urls_show", templateVars);
 });
 
 app.post('/urls', (req,res) => {
   const userId = req.session.id;
-  console.log(req.body.longURL); //log the POST request body to the console
-  // want to push the shortURL-longURL key-value pair to the URLDatabase
   let shortURL = generateRandomString()
   urlDatabase[shortURL] = {
     longURL: 'http://' + req.body.longURL,
     userID: userId
   }
-  res.redirect(`/urls/${shortURL}`) // Respond with 'Ok' 
+  res.redirect(`/urls/${shortURL}`)
 });
 
 
@@ -180,7 +160,6 @@ app.post('/urls/:shortURL/', (req,res) => {
     return res.status(401)
     .send("Please <a href='/login'>login</a> first");
   }
-
   const shortURL = req.params.shortURL;
   const url = urlDatabase[shortURL];
   if (url.userID !== user.id) {
@@ -188,8 +167,6 @@ app.post('/urls/:shortURL/', (req,res) => {
     .send("You don't have access to this url. Please <a href='/login'>login</a> first");
   }
 
-  // if starts with http, then append req.body.longURL
-  // if not apped http
   const newInputURL = 'http://' + req.body.longURL
   url.longURL = newInputURL;
   res.redirect(`/urls/${shortURL}`) // Respond with 'Ok' 
@@ -259,7 +236,6 @@ app.post('/register', (req,res) => {
   }
   
   const userPassword = req.body.password;
-
   bcrypt.hash(userPassword,10).then(result => {
     user.password = result;
     console.log("user.pass", user.password);
@@ -276,31 +252,18 @@ app.post('/register', (req,res) => {
       return res.status(400)
       .send("Email already exist. Please <a href='/register'>try again</a>");
     }
-  
-    // const user = {
-    //   id: userId,
-    //   email: userEmail,
-    //   password: userPassword
-    // }
-  
-    
+
     users[userId] = user;
     
     req.session.id = user.id;
     res.redirect(`/urls`) 
-
   })
 });
 
 app.post('/logout', (req,res) => {
-  // set a cookie named Username 
+  // clear sessions
   req.session = null;
   res.redirect(`/urls`) 
-});
-
-
-app.get('/urls.json', (req, res) => {
-  res.json(urlDatabase);
 });
 
 app.listen(PORT, () => {
