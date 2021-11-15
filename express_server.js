@@ -70,8 +70,7 @@ app.get('/', (req, res) => {
   const userID = req.session.id;
   const user = users[userID];
   if (!user) {
-    return res.status(401)
-    .send("You must <a href='/login'>login</a> first");
+    res.redirect('/login');
   }
   res.redirect('/urls');
 });
@@ -105,14 +104,9 @@ app.get("/urls/new", (req, res) => {
 
 
 app.get("/u/:shortURL", (req, res) => {
-  console.log('params',req.params);
   const shortURL = req.params.shortURL;
-  
   const url = urlDatabase[shortURL]
-  console.log('url',url);
-  console.log('short URL',shortURL)
-   const longURL = urlDatabase[shortURL]
-   console.log('longURL',longURL);
+  const longURL = urlDatabase[shortURL].longURL
 
   res.redirect(longURL)
 });
