@@ -11,7 +11,7 @@ const cookieSession = require("cookie-session");
 app.use(
   cookieSession({
     name: "session",
-    keys: ["key1", "key2"],
+    keys: ["key1", "key2"]
   })
 );
 // setting ejs as the engine
