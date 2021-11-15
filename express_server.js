@@ -105,17 +105,15 @@ app.get("/urls/new", (req, res) => {
 
 
 app.get("/u/:shortURL", (req, res) => {
-  // find a way to access the database at the shortURL key, then user will be redirected to longURL
-  const id = req.session.id;
-  const user = users[id];
-  if (!user) {
-    return res.redirect('/login')
-  }
-
+  console.log('params',req.params);
   const shortURL = req.params.shortURL;
-   console.log(shortURL);
+  
+  const url = urlDatabase[shortURL]
+  console.log('url',url);
+  console.log('short URL',shortURL)
    const longURL = urlDatabase[shortURL]
-   console.log(longURL) 
+   console.log('longURL',longURL);
+
   res.redirect(longURL)
 });
 
