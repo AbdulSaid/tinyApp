@@ -1,4 +1,5 @@
-const findUserByEmail = require("./helpers");
+const { findUserByEmail } = require("./helpers");
+const { generateRandomString } = require('./helpers');
 const express = require("express");
 const app = express();
 const PORT = 8080;
@@ -14,20 +15,8 @@ app.use(
     keys: ["key1", "key2"]
   })
 );
-// setting ejs as the engine
-app.set("view engine", "ejs");
 
-function generateRandomString() {
-  const characters =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  const length = 6;
-  let randomString = "";
-  for (let i = 0; i < length; i++) {
-    const randomNum = Math.floor(Math.random() * characters.length);
-    randomString += characters[randomNum];
-  }
-  return randomString;
-}
+app.set("view engine", "ejs");
 
 const users = {
   aJ48lW: {
@@ -52,14 +41,11 @@ const urlDatabase = {
     userID: "aJ48lW",
   },
 };
-
-// Function to find the urls for each user
 const urlsForUser = function (id) {
   const results = {};
   const keys = Object.keys(urlDatabase);
   for (const shortURL of keys) {
     const url = urlDatabase[shortURL];
-    console.log("url", url);
     if (url.userID === id) {
       results[shortURL] = url;
     }
@@ -83,7 +69,6 @@ app.get("/urls", (req, res) => {
     return res.status(401).send("You must <a href='/login'>login</a> first");
   }
   const urls = urlsForUser(userID);
-  console.log("urls in get urls", urls);
   const templateVars = {
     urls: urls,
     user: user,
@@ -102,7 +87,6 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const url = urlDatabase[shortURL];
   const longURL = urlDatabase[shortURL].longURL;
 
   res.redirect(longURL);
@@ -117,7 +101,7 @@ app.get("/urls/:shortURL", (req, res) => {
 
   const shortURL = req.params.shortURL;
   const url = urlDatabase[shortURL];
-  if (url.userID !== user.id) {
+  if (userID !== user.id) {
     return res
       .status(401)
       .send(
@@ -129,7 +113,6 @@ app.get("/urls/:shortURL", (req, res) => {
     url: url,
     user: user,
   };
-  console.log("shorturl in urls:short url", shortURL);
   return res.render("urls_show", templateVars);
 });
 
@@ -137,7 +120,7 @@ app.post("/urls", (req, res) => {
   const userId = req.session.id;
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = {
-    longURL: "http://" + req.body.longURL,
+    longURL: req.body.longURL,
     userID: userId,
   };
   res.redirect(`/urls/${shortURL}`);
@@ -159,15 +142,13 @@ app.post("/urls/:shortURL/", (req, res) => {
       );
   }
 
-  const newInputURL = "http://" + req.body.longURL;
+  const newInputURL = req.body.longURL;
   url.longURL = newInputURL;
-  res.redirect(`/urls/${shortURL}`); // Respond with 'Ok'
+  res.redirect(`/urls/${shortURL}`); 
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  // Get the shortURL from the params
   const shortURL = req.params.shortURL;
-  // Delete it from that specific key from the database
   delete urlDatabase[shortURL];
   res.redirect(`/urls`);
 });
@@ -183,10 +164,8 @@ app.get("/login", (req, res) => {
 
 app.post("/login", (req, res) => {
   const email = req.body.email;
-  const user = findUserByEmail(users, email); // helper function from above to check if the user email exist in the database
+  const user = findUserByEmail(users, email);
   const password = req.body.password;
-
-  // check if user has puts in a email or password
   if (!user) {
     return res
       .status(400)
@@ -194,7 +173,6 @@ app.post("/login", (req, res) => {
   }
 
   if (user) {
-    console.log("user is found");
     bcrypt.compare(password, user.password).then((result) => {
       if (result) {
         req.session.id = user.id;
@@ -211,11 +189,9 @@ app.post("/login", (req, res) => {
 app.get("/register", (req, res) => {
   const id = req.session.id;
   const user = users[id];
-
   if (user) {
     return res.redirect("/urls");
   }
-
   res.render("urls_registration", { user });
 });
 
@@ -231,7 +207,6 @@ app.post("/register", (req, res) => {
   const userPassword = req.body.password;
   bcrypt.hash(userPassword, 10).then((result) => {
     user.password = result;
-    console.log("user.pass", user.password);
     if (!userEmail) {
       return res
         .status(400)
@@ -262,6 +237,4 @@ app.post("/logout", (req, res) => {
   res.redirect(`/urls`);
 });
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
+app.listen(PORT, () => {});
