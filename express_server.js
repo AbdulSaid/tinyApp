@@ -117,11 +117,15 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  const userId = req.session.id;
+  const userID = req.session.id;
+  const user = users[userID];
+  if (!user || !userID) {
+    return res.status(401).send("Please <a href='/login'>login</a> first");
+  }
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
-    userID: userId,
+    userID: userID,
   };
   res.redirect(`/urls/${shortURL}`);
 });
@@ -148,6 +152,12 @@ app.post("/urls/:shortURL/", (req, res) => {
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
+  const userID = req.session.id;
+  const user = users[userID];
+  if (!user || !userID) {
+    return res.status(401).send("Please <a href='/login'>login</a> first");
+  }
+
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
   res.redirect(`/urls`);
